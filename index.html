@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kisetsu — Seasonal Anime Log</title>
+<link rel="icon" href="data:,">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14161A;
+    --panel: #1c1e24;
+    --line: #26292f;
+    --line-soft: #22252b;
+    --border: #2c2f36;
+    --text: #EDEAE2;
+    --muted: #8a8d94;
+    --dim: #6a6d74;
+    --faint: #5c5f66;
+    --accent: #D0678C;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .disp { font-family: 'Zen Kaku Gothic New', system-ui, sans-serif; }
+  .mono { font-family: 'Space Mono', monospace; }
+  a { color: inherit; }
+  button { font-family: 'Inter', system-ui, sans-serif; }
+  input, textarea, select {
+    font-family: 'Inter', system-ui, sans-serif;
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 10px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  label.fld { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+  .mt12 { margin-top: 12px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  header { border-bottom: 1px solid #24262c; padding: 28px 24px 0; }
+  .brand { font-size: 34px; font-weight: 900; margin: 0; letter-spacing: -0.02em; }
+  .sub { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+
+  .tabs { display: flex; gap: 8px; margin-top: 24px; overflow-x: auto; }
+  .tab {
+    flex: 1 1 0; min-width: 130px; background: transparent; color: var(--text);
+    border: 1px solid var(--border); border-radius: 10px 10px 0 0; padding: 12px 14px;
+    cursor: pointer; display: flex; align-items: center; gap: 10px; text-align: left;
+  }
+  .tab .kanji { font-size: 22px; font-weight: 700; opacity: 0.5; }
+  .tab .name { display: block; font-weight: 700; font-size: 14px; }
+  .tab .months { display: block; font-size: 10px; opacity: 0.75; }
+  .tab.active { color: var(--bg); }
+  .tab.active .kanji { opacity: 0.85; }
+
+  .toolbar {
+    padding: 20px 24px 0; display: flex; flex-wrap: wrap; gap: 12px;
+    align-items: center; justify-content: space-between;
+  }
+  .chip {
+    font-size: 12px; padding: 6px 12px; border-radius: 999px;
+    border: 1px solid var(--border); background: transparent; color: var(--muted);
+    cursor: pointer; font-weight: 600;
+  }
+  .chip.active { color: var(--bg); }
+  .primary { border: none; color: var(--bg); padding: 9px 16px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; }
+  .ghost { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 6px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+  .yearbtn { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; }
+  .iconbtn { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 6px; width: 26px; height: 26px; cursor: pointer; font-size: 12px; }
+
+  .table-header, .row {
+    display: grid;
+    grid-template-columns: 74px 1.3fr 1.5fr 1.3fr 1.1fr 32px;
+    gap: 18px;
+  }
+  .table-header {
+    padding: 0 8px 10px; font-family: 'Space Mono', monospace; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.06em; color: var(--dim);
+    border-bottom: 1px solid var(--border);
+  }
+  .row { padding: 20px 8px; border-bottom: 1px solid var(--line-soft); align-items: start; }
+  .col-label { display: none; }
+
+  .thumb { width: 64px; height: 64px; border-radius: 8px; border: 1px solid var(--line); object-fit: cover; }
+  .thumb-ph {
+    width: 64px; height: 64px; border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; font-size: 22px; font-weight: 700; border: 1px solid var(--line); flex-shrink: 0;
+  }
+  .title { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.3; }
+  .studio { margin: 3px 0 0; font-size: 12px; color: var(--muted); }
+  .genres { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+  .genre { font-size: 10px; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; }
+  .pill { display: inline-block; margin-top: 8px; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
+  .prog-meta { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-bottom: 3px; }
+  .track { height: 4px; background: var(--line); border-radius: 3px; overflow: hidden; }
+  .fill { height: 100%; }
+  .stars { display: flex; gap: 2px; margin-top: 8px; }
+  .star { font-size: 14px; line-height: 1; background: none; border: none; padding: 0; color: #3a3d44; }
+  .star.on { }
+  .star.editable { cursor: pointer; }
+  .prose { margin: 0; font-size: 13px; line-height: 1.5; color: #c9c6bd; }
+  .prose.empty { color: var(--faint); font-style: italic; }
+  .stafflist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+  .stafflist li { font-size: 12px; line-height: 1.4; }
+  .stafflist a { text-decoration: none; }
+  .staffrole { color: var(--dim); }
+  .actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+
+  .empty-state { text-align: center; padding: 80px 20px; color: var(--dim); }
+  .empty-kanji { font-size: 40px; margin-bottom: 8px; opacity: 0.6; }
+
+  .banner { margin: 16px 24px 0; padding: 10px 14px; background: #3a2323; color: #e0a0a0; border-radius: 8px; font-size: 13px; }
+
+  .backdrop {
+    position: fixed; inset: 0; background: rgba(10,11,13,0.7);
+    display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50;
+  }
+  .modal {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    max-width: 520px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 24px;
+  }
+  .modal h2 { margin: 0 0 16px; font-size: 20px; font-weight: 700; }
+  .staffrow { display: grid; grid-template-columns: 1fr 1fr 1fr 24px; gap: 6px; align-items: center; }
+  .x { background: none; border: none; color: #c47a7a; cursor: pointer; font-size: 14px; }
+  .dashed { align-self: flex-start; background: none; border: 1px dashed var(--border); color: var(--muted); border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
+
+  .toast {
+    position: fixed; bottom: 16px; right: 16px; font-size: 11px; color: var(--dim);
+    background: var(--panel); border: 1px solid var(--line); padding: 6px 10px; border-radius: 6px;
+  }
+
+  .centre { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 24px; width: 100%; max-width: 380px; }
+  .err { color: #e0a0a0; font-size: 12px; margin-top: 10px; }
+  .ok { color: #9bc99b; font-size: 12px; margin-top: 10px; }
+  .link { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 12px; text-decoration: underline; padding: 0; }
+  .code { font-family: 'Space Mono', monospace; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+
+  .browsegrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+  .bcard { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+  .bcover { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; display: block; }
+  .bmeta { padding: 10px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .btitle { margin: 0; font-size: 12px; font-weight: 700; line-height: 1.3; }
+  .bstudio { margin: 0; font-size: 10px; color: var(--muted); }
+  .badd {
+    margin-top: auto; border: 1px solid var(--border); background: none; color: var(--muted);
+    border-radius: 6px; padding: 5px 0; font-size: 11px; font-weight: 700; cursor: pointer;
+  }
+
+  @media (max-width: 860px) {
+    .browsegrid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+    .table-header { display: none; }
+    .row { grid-template-columns: 1fr; gap: 6px; padding: 18px 4px; }
+    .col-label {
+      display: block; font-family: 'Space Mono', monospace; font-size: 10px;
+      text-transform: uppercase; letter-spacing: 0.05em; color: var(--dim); margin-bottom: 3px;
+    }
+    .staffrow { grid-template-columns: 1fr 1fr 24px; }
+    .brand { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // ======================================================================
+  // Configuration lives in config.js — edit that file, not this one.
+  // ======================================================================
+  var CFG = window.KISETSU_CONFIG || {};
+  var SUPABASE_URL = (CFG.SUPABASE_URL || "").replace(/\/+$/, "");
+  var SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY || "";
+
+  // ======================================================================
+
+  var CONFIGURED =
+    SUPABASE_URL.indexOf("https://") === 0 && SUPABASE_ANON_KEY.length > 40;
+
+  var db = null;
+  if (CONFIGURED && window.supabase) {
+    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+
+  var SEASONS = [
+    { id: "winter", label: "Winter", kanji: "冬", months: "Jan–Mar", color: "#4A7A9D" },
+    { id: "spring", label: "Spring", kanji: "春", months: "Apr–Jun", color: "#D0678C" },
+    { id: "summer", label: "Summer", kanji: "夏", months: "Jul–Sep", color: "#E0632B" },
+    { id: "fall",   label: "Fall",   kanji: "秋", months: "Oct–Dec", color: "#B5761F" }
+  ];
+
+  var STATUSES = [
+    { id: "planning",  label: "Plan to watch", color: "#8a8d94" },
+    { id: "watching",  label: "Watching",      color: "#4A7A9D" },
+    { id: "completed", label: "Completed",     color: "#5C8A5C" },
+    { id: "dropped",   label: "Dropped",       color: "#A65858" }
+  ];
+
+  var root = document.getElementById("root");
+
+  // ---------- AniList catalogue ----------
+
+  var ANILIST = "https://graphql.anilist.co";
+
+  var MEDIA_FIELDS = ""
+    + "id siteUrl episodes genres "
+    + "title { romaji english } "
+    + "description(asHtml: false) "
+    + "coverImage { large } "
+    + "studios(isMain: true) { nodes { name } } "
+    + "staff(perPage: 5, sort: RELEVANCE) { edges { role node { name { full } siteUrl } } }";
+
+  var SEASON_QUERY = "query ($season: MediaSeason, $year: Int) {"
+    + " Page(page: 1, perPage: 40) { media("
+    + " season: $season, seasonYear: $year, type: ANIME, sort: POPULARITY_DESC"
+    + " ) { " + MEDIA_FIELDS + " } } }";
+
+  var SEARCH_QUERY = "query ($search: String) {"
+    + " Page(page: 1, perPage: 15) { media("
+    + " search: $search, type: ANIME, sort: SEARCH_MATCH"
+    + " ) { " + MEDIA_FIELDS + " } } }";
+
+  function anilist(query, variables) {
+    return fetch(ANILIST, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ query: query, variables: variables })
+    }).then(function (r) {
+      if (r.status === 429) throw new Error("AniList is rate-limiting us — wait a moment and try again.");
+      if (!r.ok) throw new Error("AniList returned " + r.status);
+      return r.json();
+    }).then(function (j) {
+      if (j.errors && j.errors.length) throw new Error(j.errors[0].message);
+      return j.data.Page.media;
+    });
+  }
+
+  function stripTags(s) {
+    if (!s) return "";
+    return String(s)
+      .replace(/<br\s*\/?>/gi, " ")
+      .replace(/<[^>]*>/g, "")
+      .replace(/&quot;/g, '"').replace(/&#039;/g, "'")
+      .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  // Turn an AniList record into one of our draft entries
+  function mediaToDraft(m, season, year) {
+    var staff = [];
+    if (m.studios && m.studios.nodes && m.studios.nodes.length) {
+      staff.push({ name: m.studios.nodes[0].name, role: "Studio", url: "" });
+    }
+    if (m.staff && m.staff.edges) {
+      for (var i = 0; i < m.staff.edges.length && staff.length < 6; i++) {
+        var ed = m.staff.edges[i];
+        if (!ed.node || !ed.node.name) continue;
+        staff.push({
+          name: ed.node.name.full,
+          role: ed.role || "",
+          url: ed.node.siteUrl || ""
+        });
+      }
+    }
+    var syn = stripTags(m.description);
+    if (syn.length > 600) syn = syn.slice(0, 597) + "…";
+
+    return {
+      title: (m.title && (m.title.english || m.title.romaji)) || "Untitled",
+      studio: (m.studios && m.studios.nodes && m.studios.nodes[0]) ? m.studios.nodes[0].name : "",
+      genres: (m.genres || []).slice(0, 4).join(", "),
+      season: season,
+      year: year,
+      status: "planning",
+      episodesWatched: 0,
+      totalEpisodes: m.episodes || 0,
+      rating: null,
+      imageUrl: (m.coverImage && m.coverImage.large) || "",
+      synopsis: syn,
+      notes: "",
+      staff: staff.length ? staff : [{ name: "", role: "", url: "" }]
+    };
+  }
+
+  // ---------- helpers ----------
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function seasonById(id) {
+    for (var i = 0; i < SEASONS.length; i++) if (SEASONS[i].id === id) return SEASONS[i];
+    return SEASONS[0];
+  }
+
+  function statusById(id) {
+    for (var i = 0; i < STATUSES.length; i++) if (STATUSES[i].id === id) return STATUSES[i];
+    return STATUSES[0];
+  }
+
+  function currentSeason() {
+    var m = new Date().getMonth();
+    if (m <= 2) return "winter";
+    if (m <= 5) return "spring";
+    if (m <= 8) return "summer";
+    return "fall";
+  }
+
+  function safeUrl(u) {
+    if (!u) return "";
+    return /^https?:\/\//i.test(u) ? u : "";
+  }
+
+  function fromDb(r) {
+    return {
+      id: r.id,
+      title: r.title || "",
+      studio: r.studio || "",
+      genres: r.genres || [],
+      season: r.season,
+      year: r.year,
+      status: r.status,
+      episodesWatched: r.episodes_watched || 0,
+      totalEpisodes: r.total_episodes || 0,
+      rating: r.rating,
+      imageUrl: r.image_url || "",
+      synopsis: r.synopsis || "",
+      notes: r.notes || "",
+      staff: r.staff || []
+    };
+  }
+
+  function toDb(e, userId) {
+    return {
+      user_id: userId,
+      title: e.title,
+      studio: e.studio,
+      genres: e.genres,
+      season: e.season,
+      year: e.year,
+      status: e.status,
+      episodes_watched: e.episodesWatched,
+      total_episodes: e.totalEpisodes,
+      rating: e.rating,
+      image_url: e.imageUrl,
+      synopsis: e.synopsis,
+      notes: e.notes,
+      staff: e.staff
+    };
+  }
+
+  function starsHtml(rating, editable, colour) {
+    var filled = rating ? Math.round(rating / 2) : 0;
+    var out = '<div class="stars">';
+    for (var i = 1; i <= 5; i++) {
+      var on = i <= filled;
+      out += '<button type="button" class="star' + (editable ? " editable" : "") + '"'
+        + (editable ? ' data-star="' + i + '"' : ' disabled')
+        + ' style="color:' + (on ? colour : "#3a3d44") + '"'
+        + ' aria-label="Rate ' + (i * 2) + ' of 10">\u2605</button>';
+    }
+    return out + "</div>";
+  }
+
+  // ---------- app state ----------
+
+  var state = {
+    session: null,
+    entries: [],
+    year: new Date().getFullYear(),
+    season: currentSeason(),
+    filter: "all",
+    loading: false,
+    saving: false,
+    error: "",
+    draft: null,
+    editingId: null,
+    browse: null,
+    search: null
+  };
+
+  // ---------- screens ----------
+
+  function renderSetup() {
+    root.innerHTML =
+      '<div class="centre"><div class="card" style="max-width:420px">'
+      + '<h1 class="disp brand" style="font-size:22px;margin:0 0 6px">季節<span style="color:var(--accent)">.</span>Kisetsu</h1>'
+      + '<p class="sub" style="margin:0 0 18px">Almost ready — the app needs your Supabase keys before it can run.</p>'
+      + '<p class="prose" style="margin-bottom:10px">1. Create a free project at <span class="code">supabase.com</span></p>'
+      + '<p class="prose" style="margin-bottom:10px">2. SQL Editor → run the schema file</p>'
+      + '<p class="prose" style="margin-bottom:10px">3. Project Settings → API → copy the Project URL and anon public key</p>'
+      + '<p class="prose" style="margin-bottom:10px">4. Open <span class="code">config.js</span> and paste both values in</p>'
+      + '<p class="prose">5. Reload this page</p>'
+      + '</div></div>';
+  }
+
+  function renderAuth(mode, msg, isError) {
+    mode = mode || "signin";
+    root.innerHTML =
+      '<div class="centre"><div style="width:100%;max-width:380px">'
+      + '<h1 class="disp" style="font-size:30px;font-weight:900;margin:0 0 4px;text-align:center">季節<span style="color:var(--accent)">.</span>Kisetsu</h1>'
+      + '<p class="sub" style="text-align:center;margin:0 0 24px">your seasonal anime log</p>'
+      + '<form id="authform" class="card">'
+      + '<label class="fld">Email</label>'
+      + '<input id="email" type="email" required placeholder="you@example.com">'
+      + '<label class="fld mt12">Password</label>'
+      + '<input id="password" type="password" required minlength="6" placeholder="At least 6 characters">'
+      + (msg ? '<p class="' + (isError ? "err" : "ok") + '">' + esc(msg) + "</p>" : "")
+      + '<button type="submit" class="primary" style="width:100%;margin-top:16px;background:var(--accent)">'
+      + (mode === "signup" ? "Create account" : "Sign in") + "</button>"
+      + "</form>"
+      + '<p style="text-align:center;font-size:12px;color:var(--dim);margin-top:16px">'
+      + (mode === "signup" ? "Already have an account? " : "New here? ")
+      + '<button class="link" id="toggle">' + (mode === "signup" ? "Sign in" : "Create one") + "</button>"
+      + "</p></div></div>";
+
+    document.getElementById("toggle").onclick = function () {
+      renderAuth(mode === "signup" ? "signin" : "signup");
+    };
+
+    document.getElementById("authform").onsubmit = function (ev) {
+      ev.preventDefault();
+      var email = document.getElementById("email").value;
+      var password = document.getElementById("password").value;
+      var btn = ev.target.querySelector("button[type=submit]");
+      btn.disabled = true;
+      btn.textContent = "Please wait…";
+
+      var p = mode === "signup"
+        ? db.auth.signUp({ email: email, password: password })
+        : db.auth.signInWithPassword({ email: email, password: password });
+
+      p.then(function (res) {
+        if (res.error) {
+          renderAuth(mode, res.error.message, true);
+        } else if (mode === "signup") {
+          renderAuth("signin", "Check your email to confirm your account, then sign in.", false);
+        }
+        // successful sign-in is picked up by onAuthStateChange
+      }).catch(function (e) {
+        renderAuth(mode, e.message || "Something went wrong.", true);
+      });
+    };
+  }
+
+  function rowHtml(e, sm) {
+    var st = statusById(e.status);
+    var pct = e.totalEpisodes ? Math.min(100, Math.round((e.episodesWatched / e.totalEpisodes) * 100)) : 0;
+    var img = safeUrl(e.imageUrl);
+
+    var photo = img
+      ? '<img class="thumb" src="' + esc(img) + '" alt="' + esc(e.title) + '">'
+      : '<div class="thumb-ph disp" style="background:linear-gradient(135deg,' + sm.color + '55,#1c1e24);color:' + sm.color + '">' + sm.kanji + "</div>";
+
+    var genres = "";
+    if (e.genres.length) {
+      genres = '<div class="genres">';
+      for (var i = 0; i < e.genres.length; i++) genres += '<span class="genre">' + esc(e.genres[i]) + "</span>";
+      genres += "</div>";
+    }
+
+    var staff = '<p class="prose empty" style="font-size:12px">No staff linked.</p>';
+    if (e.staff && e.staff.length) {
+      staff = '<ul class="stafflist">';
+      for (var j = 0; j < e.staff.length; j++) {
+        var p = e.staff[j];
+        var u = safeUrl(p.url);
+        staff += "<li>" + (u
+          ? '<a href="' + esc(u) + '" target="_blank" rel="noopener noreferrer" style="color:' + sm.color + '">' + esc(p.name) + "</a>"
+          : '<span>' + esc(p.name) + "</span>")
+          + (p.role ? ' <span class="staffrole">— ' + esc(p.role) + "</span>" : "")
+          + "</li>";
+      }
+      staff += "</ul>";
+    }
+
+    return '<div class="row">'
+      + "<div>" + photo + "</div>"
+      + '<div><span class="col-label">General info</span>'
+        + '<h3 class="title disp">' + esc(e.title) + "</h3>"
+        + (e.studio ? '<p class="studio">' + esc(e.studio) + "</p>" : "")
+        + genres
+        + '<span class="pill mono" style="background:' + st.color + '33;color:' + st.color + '">' + esc(st.label) + "</span>"
+        + '<div style="margin-top:8px">'
+          + '<div class="prog-meta mono"><span>EP ' + e.episodesWatched + "/" + (e.totalEpisodes || "?") + "</span><span>" + pct + "%</span></div>"
+          + '<div class="track"><div class="fill" style="width:' + pct + "%;background:" + sm.color + '"></div></div>'
+        + "</div>"
+        + starsHtml(e.rating, false, sm.color)
+      + "</div>"
+      + '<div><span class="col-label">Synopsis</span><p class="prose' + (e.synopsis ? "" : " empty") + '">' + esc(e.synopsis || "No synopsis added.") + "</p></div>"
+      + '<div><span class="col-label">Editor\u2019s notes</span><p class="prose' + (e.notes ? "" : " empty") + '">' + esc(e.notes || "No notes yet.") + "</p></div>"
+      + '<div><span class="col-label">Staff</span>' + staff + "</div>"
+      + '<div class="actions">'
+        + '<button class="iconbtn" data-edit="' + esc(e.id) + '" aria-label="Edit">\u270E</button>'
+        + '<button class="iconbtn" data-del="' + esc(e.id) + '" style="color:#c47a7a" aria-label="Remove">\u2715</button>'
+      + "</div>"
+      + "</div>";
+  }
+
+  function renderApp() {
+    var sm = seasonById(state.season);
+    var email = state.session && state.session.user ? state.session.user.email : "";
+
+    var tabs = "";
+    for (var i = 0; i < SEASONS.length; i++) {
+      var s = SEASONS[i];
+      var active = s.id === state.season;
+      tabs += '<button class="tab' + (active ? " active" : "") + '" data-season="' + s.id + '"'
+        + ' style="' + (active ? "background:" + s.color + ";border-color:" + s.color : "") + '">'
+        + '<span class="kanji disp">' + s.kanji + "</span><span><span class=\"name\">" + s.label
+        + '</span><span class="months mono">' + s.months + "</span></span></button>";
+    }
+
+    var chips = '<button class="chip' + (state.filter === "all" ? " active" : "") + '" data-filter="all"'
+      + (state.filter === "all" ? ' style="background:' + sm.color + ";border-color:" + sm.color + '"' : "") + ">All</button>";
+    for (var k = 0; k < STATUSES.length; k++) {
+      var f = STATUSES[k];
+      var on = state.filter === f.id;
+      chips += '<button class="chip' + (on ? " active" : "") + '" data-filter="' + f.id + '"'
+        + (on ? ' style="background:' + sm.color + ";border-color:" + sm.color + '"' : "") + ">" + f.label + "</button>";
+    }
+
+    var visible = state.entries.filter(function (e) {
+      return e.season === state.season && e.year === state.year
+        && (state.filter === "all" || e.status === state.filter);
+    });
+
+    var body;
+    if (state.loading) {
+      body = '<div class="empty-state">Loading your log…</div>';
+    } else if (!visible.length) {
+      body = '<div class="empty-state">'
+        + '<div class="empty-kanji disp" style="color:' + sm.color + '">' + sm.kanji + "</div>"
+        + "<p style=\"margin:0;font-size:14px\">Nothing logged for " + sm.label + " " + state.year + " yet.</p>"
+        + '<button id="addfirst" class="primary" style="margin-top:14px;background:none;border:1px solid ' + sm.color + ';color:' + sm.color + '">Add the first title</button>'
+        + "</div>";
+    } else {
+      body = '<div class="table-header"><span>Photo</span><span>General info</span><span>Synopsis</span><span>Editor\u2019s notes</span><span>Staff</span><span></span></div>';
+      for (var r = 0; r < visible.length; r++) body += rowHtml(visible[r], sm);
+    }
+
+    root.innerHTML =
+      "<header><div class=\"wrap\">"
+      + '<div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:12px">'
+        + "<div><h1 class=\"brand disp\">季節<span style=\"color:" + sm.color + '">.</span>Kisetsu</h1>'
+        + '<p class="sub">signed in as ' + esc(email) + "</p></div>"
+        + '<div style="display:flex;align-items:center;gap:14px">'
+          + '<div class="mono" style="display:flex;align-items:center;gap:10px;font-size:15px">'
+            + '<button class="yearbtn" id="prevyear" aria-label="Previous year">\u2039</button>'
+            + '<span style="min-width:48px;text-align:center">' + state.year + "</span>"
+            + '<button class="yearbtn" id="nextyear" aria-label="Next year">\u203A</button>'
+          + "</div>"
+          + '<button class="ghost" id="signout">Sign out</button>'
+        + "</div>"
+      + "</div>"
+      + '<div class="tabs">' + tabs + "</div>"
+      + "</div></header>"
+      + '<div class="wrap toolbar"><div style="display:flex;gap:6px;flex-wrap:wrap">' + chips + "</div>"
+      + '<div style="display:flex;gap:8px">'
+      + '<button class="ghost" id="browse" style="padding:9px 14px;font-size:13px;color:' + sm.color + ';border-color:' + sm.color + '">Browse ' + sm.label + " " + state.year + "</button>"
+      + '<button class="primary" id="add" style="background:' + sm.color + '">+ Log a title</button></div></div>'
+      + (state.error ? '<div class="wrap banner">' + esc(state.error) + "</div>" : "")
+      + '<main class="wrap" style="padding:24px 24px 80px">' + body + "</main>"
+      + (state.saving ? '<div class="toast mono">saving…</div>' : "");
+
+    // wiring
+    var tabEls = root.querySelectorAll("[data-season]");
+    for (var t = 0; t < tabEls.length; t++) {
+      tabEls[t].onclick = function () { state.season = this.getAttribute("data-season"); renderApp(); };
+    }
+    var chipEls = root.querySelectorAll("[data-filter]");
+    for (var c = 0; c < chipEls.length; c++) {
+      chipEls[c].onclick = function () { state.filter = this.getAttribute("data-filter"); renderApp(); };
+    }
+    document.getElementById("prevyear").onclick = function () { state.year--; renderApp(); };
+    document.getElementById("nextyear").onclick = function () { state.year++; renderApp(); };
+    document.getElementById("signout").onclick = function () { db.auth.signOut(); };
+    document.getElementById("add").onclick = openNew;
+    document.getElementById("browse").onclick = openBrowse;
+    var first = document.getElementById("addfirst");
+    if (first) first.onclick = openNew;
+
+    var editEls = root.querySelectorAll("[data-edit]");
+    for (var x = 0; x < editEls.length; x++) {
+      editEls[x].onclick = function () { openEdit(this.getAttribute("data-edit")); };
+    }
+    var delEls = root.querySelectorAll("[data-del]");
+    for (var y = 0; y < delEls.length; y++) {
+      delEls[y].onclick = function () { removeEntry(this.getAttribute("data-del")); };
+    }
+
+    if (state.draft) renderModal();
+    if (state.browse) renderBrowse();
+  }
+
+  // ---------- browse the season catalogue ----------
+
+  function openBrowse() {
+    state.browse = { loading: true, results: [], error: "", query: "" };
+    renderApp();
+
+    anilist(SEASON_QUERY, {
+      season: state.season.toUpperCase(),
+      year: state.year
+    }).then(function (media) {
+      if (!state.browse) return;
+      state.browse.loading = false;
+      state.browse.results = media;
+      rerenderBrowse();
+    }).catch(function (e) {
+      if (!state.browse) return;
+      state.browse.loading = false;
+      state.browse.error = e.message || "Couldn't reach the anime catalogue.";
+      rerenderBrowse();
+    });
+  }
+
+  function closeBrowse() {
+    state.browse = null;
+    var el = document.getElementById("browsebd");
+    if (el) el.parentNode.removeChild(el);
+  }
+
+  function rerenderBrowse() {
+    var el = document.getElementById("browsebd");
+    if (el) el.parentNode.removeChild(el);
+    if (state.browse) renderBrowse();
+  }
+
+  function alreadyLogged(title) {
+    for (var i = 0; i < state.entries.length; i++) {
+      if (state.entries[i].title.toLowerCase() === title.toLowerCase()
+        && state.entries[i].season === state.season
+        && state.entries[i].year === state.year) return true;
+    }
+    return false;
+  }
+
+  function renderBrowse() {
+    var b = state.browse;
+    var sm = seasonById(state.season);
+
+    var inner;
+    if (b.loading) {
+      inner = '<p class="prose" style="text-align:center;padding:40px 0">Loading the ' + sm.label + " " + state.year + " lineup…</p>";
+    } else if (b.error) {
+      inner = '<p class="err" style="text-align:center;padding:30px 0">' + esc(b.error) + "</p>";
+    } else if (!b.results.length) {
+      inner = '<p class="prose empty" style="text-align:center;padding:30px 0">Nothing found for ' + sm.label + " " + state.year + ".</p>";
+    } else {
+      inner = '<div class="browsegrid">';
+      for (var i = 0; i < b.results.length; i++) {
+        var m = b.results[i];
+        var t = (m.title && (m.title.english || m.title.romaji)) || "Untitled";
+        var img = (m.coverImage && m.coverImage.large) || "";
+        var studio = (m.studios && m.studios.nodes && m.studios.nodes[0]) ? m.studios.nodes[0].name : "";
+        var logged = alreadyLogged(t);
+        inner += '<div class="bcard">'
+          + (img ? '<img src="' + esc(img) + '" alt="" class="bcover">' : '<div class="bcover" style="background:' + sm.color + '33"></div>')
+          + '<div class="bmeta"><p class="btitle disp">' + esc(t) + "</p>"
+          + (studio ? '<p class="bstudio">' + esc(studio) + "</p>" : "")
+          + (m.episodes ? '<p class="bstudio mono">' + m.episodes + " eps</p>" : "")
+          + '<button class="badd" data-add="' + i + '"' + (logged ? " disabled" : "")
+          + ' style="' + (logged ? "opacity:.45;cursor:default" : "background:" + sm.color + ";color:var(--bg);border-color:" + sm.color) + '">'
+          + (logged ? "In your log" : "Add") + "</button>"
+          + "</div></div>";
+      }
+      inner += "</div>";
+    }
+
+    var el = document.createElement("div");
+    el.className = "backdrop";
+    el.id = "browsebd";
+    el.innerHTML = '<div class="modal" style="max-width:820px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+      + '<h2 class="disp" style="margin:0">' + sm.label + " " + state.year + "</h2>"
+      + '<button class="x" id="closebrowse" style="font-size:18px;color:var(--muted)">\u2715</button></div>'
+      + '<p class="sub" style="margin:0 0 16px">Pick a title to add it to your log — details fill in automatically.</p>'
+      + '<input id="bsearch" placeholder="Or search any anime by name…" value="' + esc(b.query) + '">'
+      + '<div style="margin-top:16px">' + inner + "</div>"
+      + '<p class="sub" style="margin:18px 0 0;font-size:11px">Catalogue data from AniList.</p>'
+      + "</div>";
+
+    document.body.appendChild(el);
+
+    el.onclick = function (ev) { if (ev.target === el) closeBrowse(); };
+    document.getElementById("closebrowse").onclick = closeBrowse;
+
+    var searchBox = document.getElementById("bsearch");
+    var timer = null;
+    searchBox.oninput = function () {
+      var v = this.value;
+      state.browse.query = v;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(function () {
+        state.browse.loading = true;
+        state.browse.error = "";
+        rerenderBrowse();
+        var p = v.trim()
+          ? anilist(SEARCH_QUERY, { search: v.trim() })
+          : anilist(SEASON_QUERY, { season: state.season.toUpperCase(), year: state.year });
+        p.then(function (media) {
+          if (!state.browse) return;
+          state.browse.loading = false;
+          state.browse.results = media;
+          rerenderBrowse();
+          var box = document.getElementById("bsearch");
+          if (box) { box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
+        }).catch(function (e) {
+          if (!state.browse) return;
+          state.browse.loading = false;
+          state.browse.error = e.message || "Search failed.";
+          rerenderBrowse();
+        });
+      }, 400);
+    };
+
+    var addBtns = el.querySelectorAll("[data-add]");
+    for (var a = 0; a < addBtns.length; a++) {
+      addBtns[a].onclick = function () {
+        var m = state.browse.results[parseInt(this.getAttribute("data-add"), 10)];
+        var draft = mediaToDraft(m, state.season, state.year);
+        closeBrowse();
+        state.editingId = null;
+        state.draft = draft;
+        renderApp();
+      };
+    }
+  }
+
+  // ---------- modal ----------
+
+  function openNew() {
+    state.editingId = null;
+    state.draft = {
+      title: "", studio: "", genres: "", season: state.season, year: state.year,
+      status: "planning", episodesWatched: 0, totalEpisodes: 12, rating: null,
+      imageUrl: "", synopsis: "", notes: "", staff: [{ name: "", role: "", url: "" }]
+    };
+    renderApp();
+  }
+
+  function openEdit(id) {
+    var e = null;
+    for (var i = 0; i < state.entries.length; i++) if (state.entries[i].id === id) e = state.entries[i];
+    if (!e) return;
+    state.editingId = id;
+    state.draft = {
+      title: e.title, studio: e.studio, genres: e.genres.join(", "),
+      season: e.season, year: e.year, status: e.status,
+      episodesWatched: e.episodesWatched, totalEpisodes: e.totalEpisodes,
+      rating: e.rating, imageUrl: e.imageUrl, synopsis: e.synopsis, notes: e.notes,
+      staff: (e.staff && e.staff.length) ? e.staff.slice() : [{ name: "", role: "", url: "" }]
+    };
+    renderApp();
+  }
+
+  function closeModal() {
+    state.draft = null;
+    state.editingId = null;
+    renderApp();
+  }
+
+  function renderModal() {
+    var d = state.draft;
+    var sm = seasonById(d.season);
+
+    var seasonOpts = "", statusOpts = "";
+    for (var i = 0; i < SEASONS.length; i++) {
+      seasonOpts += '<option value="' + SEASONS[i].id + '"' + (SEASONS[i].id === d.season ? " selected" : "") + ">" + SEASONS[i].label + "</option>";
+    }
+    for (var j = 0; j < STATUSES.length; j++) {
+      statusOpts += '<option value="' + STATUSES[j].id + '"' + (STATUSES[j].id === d.status ? " selected" : "") + ">" + STATUSES[j].label + "</option>";
+    }
+
+    var staffRows = "";
+    for (var k = 0; k < d.staff.length; k++) {
+      var p = d.staff[k];
+      staffRows += '<div class="staffrow">'
+        + '<input data-staff="name" data-i="' + k + '" placeholder="Name" value="' + esc(p.name) + '">'
+        + '<input data-staff="role" data-i="' + k + '" placeholder="Role" value="' + esc(p.role) + '">'
+        + '<input data-staff="url" data-i="' + k + '" placeholder="Link (optional)" value="' + esc(p.url) + '">'
+        + '<button class="x" data-rmstaff="' + k + '" aria-label="Remove staff row">\u2715</button>'
+        + "</div>";
+    }
+
+    var el = document.createElement("div");
+    el.className = "backdrop";
+    el.id = "backdrop";
+    el.innerHTML = '<div class="modal" id="modal">'
+      + '<h2 class="disp">' + (state.editingId ? "Edit entry" : "Log a title") + "</h2>"
+      + '<label class="fld">Title</label><input id="f-title" value="' + esc(d.title) + '" placeholder="e.g. Frieren: Beyond Journey\u2019s End">'
+      + '<label class="fld mt12">Photo URL</label><input id="f-image" value="' + esc(d.imageUrl) + '" placeholder="https://…">'
+      + '<div class="grid2 mt12"><div><label class="fld">Studio</label><input id="f-studio" value="' + esc(d.studio) + '"></div>'
+      + '<div><label class="fld">Genres (comma sep.)</label><input id="f-genres" value="' + esc(d.genres) + '"></div></div>'
+      + '<div class="grid2 mt12"><div><label class="fld">Season</label><select id="f-season">' + seasonOpts + "</select></div>"
+      + '<div><label class="fld">Year</label><input id="f-year" type="number" value="' + d.year + '"></div></div>'
+      + '<label class="fld mt12">Status</label><select id="f-status">' + statusOpts + "</select>"
+      + '<div class="grid2 mt12"><div><label class="fld">Episodes watched</label><input id="f-ew" type="number" min="0" value="' + d.episodesWatched + '"></div>'
+      + '<div><label class="fld">Total episodes</label><input id="f-te" type="number" min="0" value="' + d.totalEpisodes + '"></div></div>'
+      + '<label class="fld mt12">Rating</label>'
+      + '<div style="display:flex;align-items:center;gap:10px">' + starsHtml(d.rating, true, sm.color)
+      + '<span class="mono" style="font-size:12px;color:var(--muted)">' + (d.rating ? d.rating + "/10" : "unrated") + "</span>"
+      + (d.rating ? '<button class="link" id="clearrating" style="color:var(--dim)">clear</button>' : "")
+      + "</div>"
+      + '<label class="fld mt12">Synopsis</label><textarea id="f-syn" rows="3" placeholder="Official-style blurb…">' + esc(d.synopsis) + "</textarea>"
+      + '<label class="fld mt12">Editor\u2019s notes</label><textarea id="f-notes" rows="3" placeholder="Your own thoughts…">' + esc(d.notes) + "</textarea>"
+      + '<label class="fld mt12">Staff</label><div style="display:flex;flex-direction:column;gap:8px">' + staffRows
+      + '<button class="dashed" id="addstaff">+ Add staff</button></div>'
+      + '<div style="display:flex;gap:10px;margin-top:20px">'
+      + '<button class="ghost" id="cancel" style="flex:1;padding:10px 0;color:var(--text)">Cancel</button>'
+      + '<button class="primary" id="save" style="flex:1;background:' + sm.color + '">' + (state.editingId ? "Save changes" : "Add to log") + "</button>"
+      + "</div></div>";
+
+    document.body.appendChild(el);
+
+    el.onclick = function (ev) { if (ev.target === el) closeModal(); };
+    document.getElementById("cancel").onclick = closeModal;
+    document.getElementById("save").onclick = saveDraft;
+
+    document.getElementById("f-season").onchange = function () {
+      readForm();
+      state.draft.season = this.value;
+      rerenderModal();
+    };
+
+    var starEls = el.querySelectorAll("[data-star]");
+    for (var s = 0; s < starEls.length; s++) {
+      starEls[s].onclick = function () {
+        readForm();
+        state.draft.rating = parseInt(this.getAttribute("data-star"), 10) * 2;
+        rerenderModal();
+      };
+    }
+    var clear = document.getElementById("clearrating");
+    if (clear) clear.onclick = function () { readForm(); state.draft.rating = null; rerenderModal(); };
+
+    document.getElementById("addstaff").onclick = function () {
+      readForm();
+      state.draft.staff.push({ name: "", role: "", url: "" });
+      rerenderModal();
+    };
+    var rm = el.querySelectorAll("[data-rmstaff]");
+    for (var m = 0; m < rm.length; m++) {
+      rm[m].onclick = function () {
+        readForm();
+        state.draft.staff.splice(parseInt(this.getAttribute("data-rmstaff"), 10), 1);
+        if (!state.draft.staff.length) state.draft.staff.push({ name: "", role: "", url: "" });
+        rerenderModal();
+      };
+    }
+  }
+
+  function rerenderModal() {
+    var old = document.getElementById("backdrop");
+    if (old) old.parentNode.removeChild(old);
+    renderModal();
+  }
+
+  function readForm() {
+    var d = state.draft;
+    if (!d || !document.getElementById("f-title")) return;
+    d.title = document.getElementById("f-title").value;
+    d.imageUrl = document.getElementById("f-image").value;
+    d.studio = document.getElementById("f-studio").value;
+    d.genres = document.getElementById("f-genres").value;
+    d.year = parseInt(document.getElementById("f-year").value, 10) || state.year;
+    d.status = document.getElementById("f-status").value;
+    d.episodesWatched = parseInt(document.getElementById("f-ew").value, 10) || 0;
+    d.totalEpisodes = parseInt(document.getElementById("f-te").value, 10) || 0;
+    d.synopsis = document.getElementById("f-syn").value;
+    d.notes = document.getElementById("f-notes").value;
+
+    var inputs = document.querySelectorAll("[data-staff]");
+    for (var i = 0; i < inputs.length; i++) {
+      var idx = parseInt(inputs[i].getAttribute("data-i"), 10);
+      var field = inputs[i].getAttribute("data-staff");
+      if (d.staff[idx]) d.staff[idx][field] = inputs[i].value;
+    }
+  }
+
+  // ---------- data ----------
+
+  function loadEntries() {
+    state.loading = true;
+    state.error = "";
+    renderApp();
+    db.from("entries").select("*").order("created_at", { ascending: true })
+      .then(function (res) {
+        state.loading = false;
+        if (res.error) state.error = "Couldn't load your log: " + res.error.message;
+        else state.entries = res.data.map(fromDb);
+        renderApp();
+      });
+  }
+
+  function saveDraft() {
+    readForm();
+    var d = state.draft;
+    if (!d.title.trim()) {
+      state.error = "Give the entry a title before saving.";
+      rerenderModal();
+      return;
+    }
+
+    var clean = {
+      title: d.title.trim(),
+      studio: d.studio.trim(),
+      genres: d.genres.split(",").map(function (g) { return g.trim(); }).filter(Boolean),
+      season: d.season,
+      year: d.year,
+      status: d.status,
+      episodesWatched: d.episodesWatched,
+      totalEpisodes: d.totalEpisodes,
+      rating: d.rating,
+      imageUrl: d.imageUrl.trim(),
+      synopsis: d.synopsis.trim(),
+      notes: d.notes.trim(),
+      staff: d.staff.filter(function (p) { return p.name && p.name.trim(); })
+    };
+
+    var uid = state.session.user.id;
+    var backdrop = document.getElementById("backdrop");
+    if (backdrop) backdrop.parentNode.removeChild(backdrop);
+
+    state.draft = null;
+    state.saving = true;
+    state.error = "";
+    renderApp();
+
+    var p = state.editingId
+      ? db.from("entries").update(toDb(clean, uid)).eq("id", state.editingId)
+      : db.from("entries").insert([toDb(clean, uid)]);
+
+    p.then(function (res) {
+      state.saving = false;
+      state.editingId = null;
+      if (res.error) { state.error = res.error.message; renderApp(); }
+      else loadEntries();
+    });
+  }
+
+  function removeEntry(id) {
+    if (!window.confirm("Remove this entry? This can't be undone.")) return;
+    state.saving = true;
+    renderApp();
+    db.from("entries").delete().eq("id", id).then(function (res) {
+      state.saving = false;
+      if (res.error) { state.error = res.error.message; renderApp(); }
+      else loadEntries();
+    });
+  }
+
+  // ---------- boot ----------
+
+  function boot() {
+    if (!CONFIGURED) { renderSetup(); return; }
+
+    if (!window.supabase || !db) {
+      root.innerHTML = '<div class="centre"><div class="card">'
+        + '<h2 class="disp" style="margin:0 0 8px">Couldn\u2019t reach Supabase</h2>'
+        + '<p class="prose">The Supabase library failed to load. This is usually a network or firewall issue — try a different connection.</p>'
+        + "</div></div>";
+      return;
+    }
+
+    db.auth.getSession().then(function (res) {
+      state.session = res.data.session;
+      if (state.session) { renderApp(); loadEntries(); }
+      else renderAuth("signin");
+    });
+
+    db.auth.onAuthStateChange(function (_event, session) {
+      var was = !!state.session;
+      state.session = session;
+      if (session && !was) { renderApp(); loadEntries(); }
+      else if (!session) { state.entries = []; renderAuth("signin"); }
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+})();
+</script>
+</body>
+</html>
