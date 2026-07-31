@@ -183,8 +183,8 @@
   // Configuration lives in config.js — edit that file, not this one.
   // ======================================================================
   var CFG = window.KISETSU_CONFIG || {};
-  var SUPABASE_URL = (CFG.SUPABASE_URL || "https://vtfapuvsojxomtjgqyog.supabase.co").replace(/\/+$/, "https://vtfapuvsojxomtjgqyog.supabase.co");
-  var SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0ZmFwdXZzb2p4b210amdxeW9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU0ODQ2ODgsImV4cCI6MjEwMTA2MDY4OH0.Tt7q6YTeO80dSn4bhsZDrLs2kQmAfpdGW7_ecS27B9k";
+  var SUPABASE_URL = (CFG.SUPABASE_URL || "").replace(/\/+$/, "");
+  var SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY || "";
 
   // ======================================================================
 
@@ -514,7 +514,15 @@
       + "</div>";
   }
 
+  function clearOverlays() {
+    var olds = document.querySelectorAll(".backdrop");
+    for (var i = 0; i < olds.length; i++) {
+      if (olds[i].parentNode) olds[i].parentNode.removeChild(olds[i]);
+    }
+  }
+
   function renderApp() {
+    clearOverlays();
     var sm = seasonById(state.season);
     var email = state.session && state.session.user ? state.session.user.email : "";
 
@@ -634,13 +642,11 @@
 
   function closeBrowse() {
     state.browse = null;
-    var el = document.getElementById("browsebd");
-    if (el) el.parentNode.removeChild(el);
+    clearOverlays();
   }
 
   function rerenderBrowse() {
-    var el = document.getElementById("browsebd");
-    if (el) el.parentNode.removeChild(el);
+    clearOverlays();
     if (state.browse) renderBrowse();
   }
 
@@ -775,6 +781,7 @@
   function closeModal() {
     state.draft = null;
     state.editingId = null;
+    clearOverlays();
     renderApp();
   }
 
@@ -869,8 +876,7 @@
   }
 
   function rerenderModal() {
-    var old = document.getElementById("backdrop");
-    if (old) old.parentNode.removeChild(old);
+    clearOverlays();
     renderModal();
   }
 
