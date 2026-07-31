@@ -174,17 +174,17 @@
 <div id="root"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js"></script>
 <script>
 (function () {
   "use strict";
 
   // ======================================================================
-  // Configuration lives in config.js — edit that file, not this one.
+  // CONFIG — already filled in. Supabase → Project Settings → API
   // ======================================================================
-  var CFG = window.KISETSU_CONFIG || {};
-  var SUPABASE_URL = (CFG.SUPABASE_URL || "https://vtfapuvsojxomtjgqyog.supabase.co").replace(/\/+$/, "https://vtfapuvsojxomtjgqyog.supabase.co");
-  var SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0ZmFwdXZzb2p4b210amdxeW9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU0ODQ2ODgsImV4cCI6MjEwMTA2MDY4OH0.Tt7q6YTeO80dSn4bhsZDrLs2kQmAfpdGW7_ecS27B9k";
+  var SUPABASE_URL = "https://vtfapuvsojxomtjgqyog.supabase.co";
+  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0ZmFwdXZzb2p4b210amdxeW9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU0ODQ2ODgsImV4cCI6MjEwMTA2MDY4OH0.Tt7q6YTeO80dSn4bhsZDrLs2kQmAfpdGW7_ecS27B9k";
+
+  SUPABASE_URL = SUPABASE_URL.replace(/\/+$/, "");
 
   // ======================================================================
 
@@ -239,14 +239,25 @@
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body: JSON.stringify({ query: query, variables: variables })
+    }).catch(function () {
+      throw new Error("NETWORK");
     }).then(function (r) {
-      if (r.status === 429) throw new Error("AniList is rate-limiting us — wait a moment and try again.");
-      if (!r.ok) throw new Error("AniList returned " + r.status);
+      if (r.status === 429) throw new Error("AniList is busy right now — wait a few seconds and try again.");
+      if (!r.ok) throw new Error("AniList returned an error (" + r.status + "). Try again shortly.");
       return r.json();
     }).then(function (j) {
       if (j.errors && j.errors.length) throw new Error(j.errors[0].message);
       return j.data.Page.media;
     });
+  }
+
+  function friendlyError(e) {
+    var m = (e && e.message) || "";
+    if (m === "NETWORK" || /load failed|failed to fetch|networkerror/i.test(m)) {
+      return "Couldn't reach the anime catalogue. This is usually a network or firewall block — "
+        + "try a different connection, or mobile data if you're on office wifi.";
+    }
+    return m || "Something went wrong loading the catalogue.";
   }
 
   function stripTags(s) {
@@ -393,8 +404,36 @@
     draft: null,
     editingId: null,
     browse: null,
-    search: null
+    search: null,
+    catalogue: null
   };
+
+  // Shared markup for one catalogue card (used by guest view and browse panel)
+  function cardHtml(m, i, colour, logged, guest) {
+    var t = (m.title && (m.title.english || m.title.romaji)) || "Untitled";
+    var img = (m.coverImage && m.coverImage.large) || "";
+    var studio = (m.studios && m.studios.nodes && m.studios.nodes[0]) ? m.studios.nodes[0].name : "";
+    var label = guest ? "Sign in to add" : (logged ? "In your log" : "Add");
+    var dead = !guest && logged;
+    return '<div class="bcard">'
+      + (img ? '<img src="' + esc(img) + '" alt="" class="bcover">' : '<div class="bcover" style="background:' + colour + '33"></div>')
+      + '<div class="bmeta"><p class="btitle disp">' + esc(t) + "</p>"
+      + (studio ? '<p class="bstudio">' + esc(studio) + "</p>" : "")
+      + (m.episodes ? '<p class="bstudio mono">' + m.episodes + " eps</p>" : "")
+      + '<button class="badd" data-add="' + i + '"' + (dead ? " disabled" : "")
+      + ' style="' + (dead ? "opacity:.45;cursor:default"
+        : "background:" + colour + ";color:var(--bg);border-color:" + colour) + '">'
+      + label + "</button></div></div>";
+  }
+
+  function catalogueGrid(list, colour, guest) {
+    var out = '<div class="browsegrid">';
+    for (var i = 0; i < list.length; i++) {
+      var t = (list[i].title && (list[i].title.english || list[i].title.romaji)) || "";
+      out += cardHtml(list[i], i, colour, guest ? false : alreadyLogged(t), guest);
+    }
+    return out + "</div>";
+  }
 
   // ---------- screens ----------
 
@@ -406,7 +445,7 @@
       + '<p class="prose" style="margin-bottom:10px">1. Create a free project at <span class="code">supabase.com</span></p>'
       + '<p class="prose" style="margin-bottom:10px">2. SQL Editor → run the schema file</p>'
       + '<p class="prose" style="margin-bottom:10px">3. Project Settings → API → copy the Project URL and anon public key</p>'
-      + '<p class="prose" style="margin-bottom:10px">4. Open <span class="code">config.js</span> and paste both values in</p>'
+      + '<p class="prose" style="margin-bottom:10px">4. Paste both values into the top of this file</p>'
       + '<p class="prose">5. Reload this page</p>'
       + '</div></div>';
   }
@@ -429,7 +468,12 @@
       + '<p style="text-align:center;font-size:12px;color:var(--dim);margin-top:16px">'
       + (mode === "signup" ? "Already have an account? " : "New here? ")
       + '<button class="link" id="toggle">' + (mode === "signup" ? "Sign in" : "Create one") + "</button>"
-      + "</p></div></div>";
+      + "</p>"
+      + '<p style="text-align:center;font-size:12px;margin-top:8px">'
+      + '<button class="link" id="backtocat" style="color:var(--muted)">Browse without an account</button></p>'
+      + "</div></div>";
+
+    document.getElementById("backtocat").onclick = function () { loadCatalogue(); };
 
     document.getElementById("toggle").onclick = function () {
       renderAuth(mode === "signup" ? "signin" : "signup");
@@ -512,6 +556,99 @@
         + '<button class="iconbtn" data-del="' + esc(e.id) + '" style="color:#c47a7a" aria-label="Remove">\u2715</button>'
       + "</div>"
       + "</div>";
+  }
+
+  // ---------- public (signed-out) view ----------
+
+  function loadCatalogue() {
+    state.catalogue = { loading: true, results: [], error: "", query: state.catalogue ? state.catalogue.query : "" };
+    renderGuest();
+    var q = state.catalogue.query.trim();
+    var p = q
+      ? anilist(SEARCH_QUERY, { search: q })
+      : anilist(SEASON_QUERY, { season: state.season.toUpperCase(), year: state.year });
+    p.then(function (media) {
+      if (!state.catalogue) return;
+      state.catalogue.loading = false;
+      state.catalogue.results = media;
+      renderGuest(true);
+    }).catch(function (e) {
+      if (!state.catalogue) return;
+      state.catalogue.loading = false;
+      state.catalogue.error = friendlyError(e);
+      renderGuest();
+    });
+  }
+
+  function renderGuest(keepFocus) {
+    clearOverlays();
+    var sm = seasonById(state.season);
+    var c = state.catalogue || { loading: true, results: [], error: "", query: "" };
+
+    var tabs = "";
+    for (var i = 0; i < SEASONS.length; i++) {
+      var s = SEASONS[i];
+      var active = s.id === state.season;
+      tabs += '<button class="tab' + (active ? " active" : "") + '" data-season="' + s.id + '"'
+        + ' style="' + (active ? "background:" + s.color + ";border-color:" + s.color : "") + '">'
+        + '<span class="kanji disp">' + s.kanji + '</span><span><span class="name">' + s.label
+        + '</span><span class="months mono">' + s.months + "</span></span></button>";
+    }
+
+    var body;
+    if (c.loading) body = '<p class="prose" style="text-align:center;padding:60px 0">Loading the lineup…</p>';
+    else if (c.error) body = '<div style="text-align:center;padding:50px 20px">'
+      + '<p class="err" style="max-width:460px;margin:0 auto 16px">' + esc(c.error) + "</p>"
+      + '<button class="primary" id="retrycat" style="background:' + sm.color + '">Try again</button></div>';
+    else if (!c.results.length) body = '<p class="prose empty" style="text-align:center;padding:50px 0">Nothing found.</p>';
+    else body = catalogueGrid(c.results, sm.color, true);
+
+    root.innerHTML =
+      "<header><div class=\"wrap\">"
+      + '<div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:12px">'
+        + '<div><h1 class="brand disp">季節<span style="color:' + sm.color + '">.</span>Kisetsu</h1>'
+        + '<p class="sub">every season, one shelf — browse freely, sign in to keep your own log</p></div>'
+        + '<div style="display:flex;align-items:center;gap:14px">'
+          + '<div class="mono" style="display:flex;align-items:center;gap:10px;font-size:15px">'
+            + '<button class="yearbtn" id="prevyear" aria-label="Previous year">\u2039</button>'
+            + '<span style="min-width:48px;text-align:center">' + state.year + "</span>"
+            + '<button class="yearbtn" id="nextyear" aria-label="Next year">\u203A</button>'
+          + "</div>"
+          + '<button class="primary" id="gosignin" style="background:' + sm.color + '">Sign in</button>'
+        + "</div>"
+      + "</div>"
+      + '<div class="tabs">' + tabs + "</div>"
+      + "</div></header>"
+      + '<main class="wrap" style="padding:24px 24px 80px">'
+        + '<input id="csearch" placeholder="Search any anime by name…" value="' + esc(c.query) + '" style="max-width:420px;margin-bottom:20px">'
+        + body
+        + '<p class="sub" style="margin:24px 0 0;font-size:11px">Catalogue data from AniList.</p>'
+      + "</main>";
+
+    var tabEls = root.querySelectorAll("[data-season]");
+    for (var t = 0; t < tabEls.length; t++) {
+      tabEls[t].onclick = function () { state.season = this.getAttribute("data-season"); loadCatalogue(); };
+    }
+    document.getElementById("prevyear").onclick = function () { state.year--; loadCatalogue(); };
+    document.getElementById("nextyear").onclick = function () { state.year++; loadCatalogue(); };
+    document.getElementById("gosignin").onclick = function () { renderAuth("signin"); };
+
+    var retry = document.getElementById("retrycat");
+    if (retry) retry.onclick = loadCatalogue;
+
+    var addBtns = root.querySelectorAll("[data-add]");
+    for (var a = 0; a < addBtns.length; a++) {
+      addBtns[a].onclick = function () { renderAuth("signup"); };
+    }
+
+    var box = document.getElementById("csearch");
+    var timer = null;
+    box.oninput = function () {
+      state.catalogue.query = this.value;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(loadCatalogue, 450);
+    };
+    if (keepFocus && c.query) { box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
   }
 
   function clearOverlays() {
@@ -635,7 +772,7 @@
     }).catch(function (e) {
       if (!state.browse) return;
       state.browse.loading = false;
-      state.browse.error = e.message || "Couldn't reach the anime catalogue.";
+      state.browse.error = friendlyError(e);
       rerenderBrowse();
     });
   }
@@ -671,24 +808,7 @@
     } else if (!b.results.length) {
       inner = '<p class="prose empty" style="text-align:center;padding:30px 0">Nothing found for ' + sm.label + " " + state.year + ".</p>";
     } else {
-      inner = '<div class="browsegrid">';
-      for (var i = 0; i < b.results.length; i++) {
-        var m = b.results[i];
-        var t = (m.title && (m.title.english || m.title.romaji)) || "Untitled";
-        var img = (m.coverImage && m.coverImage.large) || "";
-        var studio = (m.studios && m.studios.nodes && m.studios.nodes[0]) ? m.studios.nodes[0].name : "";
-        var logged = alreadyLogged(t);
-        inner += '<div class="bcard">'
-          + (img ? '<img src="' + esc(img) + '" alt="" class="bcover">' : '<div class="bcover" style="background:' + sm.color + '33"></div>')
-          + '<div class="bmeta"><p class="btitle disp">' + esc(t) + "</p>"
-          + (studio ? '<p class="bstudio">' + esc(studio) + "</p>" : "")
-          + (m.episodes ? '<p class="bstudio mono">' + m.episodes + " eps</p>" : "")
-          + '<button class="badd" data-add="' + i + '"' + (logged ? " disabled" : "")
-          + ' style="' + (logged ? "opacity:.45;cursor:default" : "background:" + sm.color + ";color:var(--bg);border-color:" + sm.color) + '">'
-          + (logged ? "In your log" : "Add") + "</button>"
-          + "</div></div>";
-      }
-      inner += "</div>";
+      inner = catalogueGrid(b.results, sm.color, false);
     }
 
     var el = document.createElement("div");
@@ -732,7 +852,7 @@
         }).catch(function (e) {
           if (!state.browse) return;
           state.browse.loading = false;
-          state.browse.error = e.message || "Search failed.";
+          state.browse.error = friendlyError(e);
           rerenderBrowse();
         });
       }, 400);
@@ -990,14 +1110,14 @@
     db.auth.getSession().then(function (res) {
       state.session = res.data.session;
       if (state.session) { renderApp(); loadEntries(); }
-      else renderAuth("signin");
+      else loadCatalogue();
     });
 
     db.auth.onAuthStateChange(function (_event, session) {
       var was = !!state.session;
       state.session = session;
-      if (session && !was) { renderApp(); loadEntries(); }
-      else if (!session) { state.entries = []; renderAuth("signin"); }
+      if (session && !was) { state.catalogue = null; renderApp(); loadEntries(); }
+      else if (!session) { state.entries = []; loadCatalogue(); }
     });
   }
 
