@@ -718,9 +718,7 @@
       + '<div class="tabs">' + tabs + "</div>"
       + "</div></header>"
       + '<div class="wrap toolbar"><div style="display:flex;gap:6px;flex-wrap:wrap">' + chips + "</div>"
-      + '<div style="display:flex;gap:8px">'
-      + '<button class="ghost" id="browse" style="padding:9px 14px;font-size:13px;color:' + sm.color + ';border-color:' + sm.color + '">Browse ' + sm.label + " " + state.year + "</button>"
-      + '<button class="primary" id="add" style="background:' + sm.color + '">+ Log a title</button></div></div>'
+      + '<button class="primary" id="add" style="background:' + sm.color + '">+ Log a title</button></div>'
       + (state.error ? '<div class="wrap banner">' + esc(state.error) + "</div>" : "")
       + '<main class="wrap" style="padding:24px 24px 80px">' + body + "</main>"
       + (state.saving ? '<div class="toast mono">saving…</div>' : "");
@@ -737,10 +735,9 @@
     document.getElementById("prevyear").onclick = function () { state.year--; renderApp(); };
     document.getElementById("nextyear").onclick = function () { state.year++; renderApp(); };
     document.getElementById("signout").onclick = function () { db.auth.signOut(); };
-    document.getElementById("add").onclick = openNew;
-    document.getElementById("browse").onclick = openBrowse;
+    document.getElementById("add").onclick = openBrowse;
     var first = document.getElementById("addfirst");
-    if (first) first.onclick = openNew;
+    if (first) first.onclick = openBrowse;
 
     var editEls = root.querySelectorAll("[data-edit]");
     for (var x = 0; x < editEls.length; x++) {
@@ -821,13 +818,18 @@
       + '<p class="sub" style="margin:0 0 16px">Pick a title to add it to your log — details fill in automatically.</p>'
       + '<input id="bsearch" placeholder="Or search any anime by name…" value="' + esc(b.query) + '">'
       + '<div style="margin-top:16px">' + inner + "</div>"
-      + '<p class="sub" style="margin:18px 0 0;font-size:11px">Catalogue data from AniList.</p>'
+      + '<p class="sub" style="margin:18px 0 0;font-size:11px">Catalogue data from AniList. '
+      + 'Can\'t find it? <button class="link" id="manualadd" style="font-size:11px">Add it manually</button></p>'
       + "</div>";
 
     document.body.appendChild(el);
 
     el.onclick = function (ev) { if (ev.target === el) closeBrowse(); };
     document.getElementById("closebrowse").onclick = closeBrowse;
+    document.getElementById("manualadd").onclick = function () {
+      closeBrowse();
+      openNew();
+    };
 
     var searchBox = document.getElementById("bsearch");
     var timer = null;
